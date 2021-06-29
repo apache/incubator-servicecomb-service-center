@@ -21,10 +21,10 @@ import (
 	"reflect"
 	"strings"
 
-	cmap "github.com/orcaman/concurrent-map"
-
+	"github.com/apache/servicecomb-service-center/datasource"
 	"github.com/apache/servicecomb-service-center/datasource/mongo/client/model"
 	"github.com/apache/servicecomb-service-center/datasource/sdcommon"
+	cmap "github.com/orcaman/concurrent-map"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -42,6 +42,7 @@ func init() {
 	ServiceIndexCols.AddIndexFunc(ServiceIDIndex)
 	ServiceIndexCols.AddIndexFunc(ServiceInfoIndex)
 	ServiceIndexCols.AddIndexFunc(ServiceVersionIndex)
+	ServiceIndexCols.AddIndexFunc(ServiceDomainProjectIndex)
 }
 
 func newServiceStore() *MongoCacher {
@@ -162,15 +163,20 @@ func (s *serviceStore) isValueNotUpdated(value interface{}, newValue interface{}
 
 func ServiceIDIndex(data interface{}) string {
 	svc := data.(model.Service)
-	return strings.Join([]string{svc.Domain, svc.Project, svc.Service.ServiceId}, "/")
+	return strings.Join([]string{svc.Domain, svc.Project, svc.Service.ServiceId}, datasource.Split)
 }
 
 func ServiceInfoIndex(data interface{}) string {
 	svc := data.(model.Service)
-	return strings.Join([]string{svc.Domain, svc.Project, svc.Service.AppId, svc.Service.ServiceName, svc.Service.Version}, "/")
+	return strings.Join([]string{svc.Domain, svc.Project, svc.Service.AppId, svc.Service.ServiceName, svc.Service.Version}, datasource.Split)
 }
 
 func ServiceVersionIndex(data interface{}) string {
 	svc := data.(model.Service)
-	return strings.Join([]string{svc.Domain, svc.Project, svc.Service.AppId, svc.Service.ServiceName}, "/")
+	return strings.Join([]string{svc.Domain, svc.Project, svc.Service.AppId, svc.Service.ServiceName}, datasource.Split)
+}
+
+func ServiceDomainProjectIndex(data interface{}) string {
+	svc := data.(model.Service)
+	return strings.Join([]string{svc.Domain, svc.Project}, datasource.Split)
 }
