@@ -24,13 +24,12 @@ import (
 	"sync"
 	"time"
 
-	rmodel "github.com/go-chassis/cari/discovery"
-
 	"github.com/apache/servicecomb-service-center/datasource/sdcommon"
 	"github.com/apache/servicecomb-service-center/pkg/backoff"
 	"github.com/apache/servicecomb-service-center/pkg/gopool"
 	"github.com/apache/servicecomb-service-center/pkg/log"
 	"github.com/apache/servicecomb-service-center/pkg/util"
+	rmodel "github.com/go-chassis/cari/discovery"
 )
 
 // MongoCacher manages mongo cache.
@@ -193,10 +192,6 @@ func (c *MongoCacher) handleEventBus(eventbus *sdcommon.EventBus) error {
 		}
 
 		for _, resource := range resp.Resources {
-			if resource.Value == nil {
-				log.Error(fmt.Sprintf("get nil value while watch for mongocache,the docID is %s", resource.Key), nil)
-				break
-			}
 			action := resp.Action
 			var event MongoEvent
 			switch action {
@@ -206,6 +201,10 @@ func (c *MongoCacher) handleEventBus(eventbus *sdcommon.EventBus) error {
 				event = NewMongoEventByResource(resource, rmodel.EVT_UPDATE)
 			case sdcommon.ActionDelete:
 				resource.Value = c.cache.Get(resource.Key)
+				if resource.Value == nil {
+					log.Error(fmt.Sprintf("get nil value while watch for mongocache,the docID is %s", resource.Key), nil)
+					continue
+				}
 				event = NewMongoEventByResource(resource, rmodel.EVT_DELETE)
 			}
 			events = append(events, event)

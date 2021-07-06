@@ -125,6 +125,7 @@ func (s *TypeStore) Service() *MongoCacher             { return s.TypeCacher(ser
 func (s *TypeStore) Instance() *MongoCacher            { return s.TypeCacher(instance) }
 func (s *TypeStore) Rule() *MongoCacher                { return s.TypeCacher(rule) }
 func (s *TypeStore) Dep() *MongoCacher                 { return s.TypeCacher(dep) }
+func (s *TypeStore) Schema() *MongoCacher              { return s.TypeCacher(schema) }
 
 func Store() *TypeStore {
 	return store

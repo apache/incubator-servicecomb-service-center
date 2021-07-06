@@ -20,5 +20,6 @@ package datasource
 const (
 	ServiceKeyPrefix  = "/cse-sr/ms/files"
 	InstanceKeyPrefix = "/cse-sr/inst/files"
-	SPLIT             = "/"
+	Split             = "/"
+	Provider          = "p"
 )

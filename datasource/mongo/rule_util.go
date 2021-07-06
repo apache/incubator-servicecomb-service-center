@@ -21,22 +21,17 @@ import (
 	"context"
 
 	"github.com/apache/servicecomb-service-center/datasource/cache"
-	"github.com/go-chassis/cari/discovery"
-
 	"github.com/apache/servicecomb-service-center/datasource/mongo/client/dao"
 	"github.com/apache/servicecomb-service-center/datasource/mongo/client/model"
 	mutil "github.com/apache/servicecomb-service-center/datasource/mongo/util"
 	"github.com/apache/servicecomb-service-center/pkg/util"
+	"github.com/go-chassis/cari/discovery"
 )
 
 func Filter(ctx context.Context, rules []*model.Rule, consumerID string) (bool, error) {
-	consumer, ok := cache.GetServiceByID(ctx, consumerID)
-	if !ok {
-		var err error
-		consumer, err = dao.GetServiceByID(ctx, consumerID)
-		if err != nil {
-			return false, err
-		}
+	consumer, err := GetServiceByID(ctx, consumerID)
+	if err != nil {
+		return false, err
 	}
 
 	if len(rules) == 0 {
@@ -81,4 +76,42 @@ func FilterAll(ctx context.Context, consumerIDs []string, rules []*model.Rule) (
 		}
 	}
 	return consumers[:allowIdx], consumers[denyIdx:], nil
+}
+
+func GetRulesByServiceID(ctx context.Context, serviceID string) ([]*model.Rule, error) {
+	rules, ok := cache.GetRulesByServiceID(ctx, serviceID)
+	if ok {
+		return rules, nil
+	}
+	return dao.GetRulesByServiceID(ctx, serviceID)
+}
+
+func GetRulesByServiceIDAcrossDomain(ctx context.Context, serviceID string) ([]*model.Rule, error) {
+	rules, ok := cache.GetRulesByServiceIDAcrossDomain(ctx, serviceID)
+	if ok {
+		return rules, nil
+	}
+	providerDomain, providerProject := util.ParseTargetDomain(ctx), util.ParseTargetProject(ctx)
+	filter := mutil.NewDomainProjectFilter(providerDomain, providerProject, mutil.ServiceID(serviceID))
+	return dao.GetRules(ctx, filter)
+}
+
+func GetServiceRulesByServiceID(ctx context.Context, serviceID string) ([]*discovery.ServiceRule, error) {
+	rules, ok := cache.GetServiceRulesByServiceID(ctx, serviceID)
+	if ok {
+		return rules, nil
+	}
+
+	filter := mutil.NewDomainProjectFilter(util.ParseDomain(ctx), util.ParseProject(ctx), mutil.ServiceID(serviceID))
+	return dao.GetServiceRules(ctx, filter)
+}
+
+func RuleExist(ctx context.Context, serviceID string, ruleID string) (bool, error) {
+	rules, ok := cache.GetRulesByRuleID(ctx, serviceID, ruleID)
+	if ok && len(rules) > 0 {
+		return true, nil
+	}
+
+	filter := mutil.NewDomainProjectFilter(util.ParseDomain(ctx), util.ParseProject(ctx), mutil.ServiceID(serviceID), mutil.RuleRuleID(ruleID))
+	return dao.RuleExist(ctx, filter)
 }

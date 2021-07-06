@@ -32,6 +32,7 @@ const (
 	instance = "instance"
 	rule     = "rule"
 	dep      = "dependency"
+	schema   = "schema"
 )
 
 type cacherRegisterInitiallizer func() (cacher *MongoCacher)

@@ -19,11 +19,12 @@ package sd
 
 import (
 	"reflect"
+	"strings"
 
-	cmap "github.com/orcaman/concurrent-map"
-
+	"github.com/apache/servicecomb-service-center/datasource"
 	"github.com/apache/servicecomb-service-center/datasource/mongo/client/model"
 	"github.com/apache/servicecomb-service-center/datasource/sdcommon"
+	cmap "github.com/orcaman/concurrent-map"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -39,6 +40,7 @@ func init() {
 	RegisterCacher(rule, newRuleStore)
 	RuleIndexCols = NewIndexCols()
 	RuleIndexCols.AddIndexFunc(RuleServiceIDIndex)
+	RuleIndexCols.AddIndexFunc(RuleRuleIDIndex)
 }
 
 func newRuleStore() *MongoCacher {
@@ -159,5 +161,10 @@ func (s *ruleStore) isValueNotUpdated(value interface{}, newValue interface{}) b
 
 func RuleServiceIDIndex(data interface{}) string {
 	rule := data.(model.Rule)
-	return rule.ServiceID
+	return strings.Join([]string{rule.Domain, rule.Project, rule.ServiceID}, datasource.Split)
+}
+
+func RuleRuleIDIndex(data interface{}) string {
+	rule := data.(model.Rule)
+	return strings.Join([]string{rule.Domain, rule.Project, rule.ServiceID, rule.Rule.RuleId}, datasource.Split)
 }
